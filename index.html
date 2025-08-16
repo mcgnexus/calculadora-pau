@@ -395,31 +395,30 @@
             <div class="example-item" onclick="setExample('x^3 + 2*x^2 - 5*x + 1', 'derivada')">📈 Polinomio completo</div>
         </div>
     </div>
-
-    <script>
+<script>
         // Configuración global
         const backendUrl = 'https://calculadora-pau.vercel.app/api';
         let currentOperation = 'derivada';
         let currentLevel = 'normal';
 
       // Funciones para cambiar estado
-function cambiarOperacion(operacion, elemento) {
-    document.querySelectorAll('.operation-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    elemento.classList.add('active');
-    currentOperation = operacion;
-    console.log('Operación cambiada a:', operacion); // Para debug
-}
+        function cambiarOperacion(operacion, elemento) {
+            document.querySelectorAll('.operation-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            elemento.classList.add('active');
+            currentOperation = operacion;
+            console.log('Operación cambiada a:', operacion); // Para debug
+        }
 
-function cambiarNivel(nivel, elemento) {
-    document.querySelectorAll('.difficulty-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    elemento.classList.add('active');
-    currentLevel = nivel;
-    console.log('Nivel cambiado a:', nivel); // Para debug
-}
+        function cambiarNivel(nivel, elemento) {
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            elemento.classList.add('active');
+            currentLevel = nivel;
+            console.log('Nivel cambiado a:', nivel); // Para debug
+        }
 
         // Función para convertir notación matemática
         function convertirNotacion(texto) {
@@ -749,7 +748,6 @@ function cambiarNivel(nivel, elemento) {
                 return operacion === 'derivada' ? resultado.derivada : resultado.integral;
             } else {
                 return operacion === 'derivada' ? 
-                    
                     `f'(x) = [Derivada de ${funcion}]` : 
                     `∫${funcion} dx = [Integral de ${funcion}] + C`;
             }
@@ -778,23 +776,23 @@ function cambiarNivel(nivel, elemento) {
             `;
             container.style.display = 'block';
         }
-function setExample(funcion, operacion) {
-    document.getElementById('funcion').value = funcion;
-    
-    // Actualizar botones de operación
-    document.querySelectorAll('.operation-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Activar el botón correcto
-    if (operacion === 'derivada') {
-        document.querySelector('[onclick*="derivada"]').classList.add('active');
-    } else {
-        document.querySelector('[onclick*="integral"]').classList.add('active');
-    }
-    
-    currentOperation = operacion;
-}
+        function setExample(funcion, operacion) {
+            document.getElementById('funcion').value = funcion;
+            
+            // Actualizar botones de operación
+            document.querySelectorAll('.operation-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Activar el botón correcto
+            if (operacion === 'derivada') {
+                document.querySelector('[onclick*="derivada"]').classList.add('active');
+            } else {
+                document.querySelector('[onclick*="integral"]').classList.add('active');
+            }
+            
+            currentOperation = operacion;
+        }
         
 
         // Event listeners
@@ -814,5 +812,6 @@ function setExample(funcion, operacion) {
             });
         });
     </script>
+   
 </body>
 </html>
