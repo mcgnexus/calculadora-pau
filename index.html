@@ -1,9 +1,24 @@
-<!DOCTYPE html>
+     <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal PAU - Calculadora Matemáticas</title>
+    
+    <!-- MathJax para notación matemática -->
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+    };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -200,6 +215,17 @@
             border-radius: 12px;
             margin-bottom: 15px;
             border: 1px solid #e1e5e9;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .result-header {
             display: flex;
@@ -234,6 +260,8 @@
             margin: 8px 0;
             padding-left: 20px;
             position: relative;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
         }
         .step::before {
             content: "→";
@@ -241,6 +269,25 @@
             left: 0;
             color: #667eea;
             font-weight: bold;
+        }
+        .step:hover {
+            border-left-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 5px;
+        }
+        /* Efecto cursor parpadeante */
+        .typing::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: #667eea;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        /* Estilo para matemáticas */
+        .MathJax {
+            font-size: 1.1em !important;
         }
         .error-message {
             background: #ffebee;
@@ -357,23 +404,70 @@
 
         // Funciones para cambiar estado
         function cambiarOperacion(operacion, elemento) {
-            // Remover active de todos los botones
             document.querySelectorAll('.operation-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            // Añadir active al botón clickeado
             elemento.classList.add('active');
             currentOperation = operacion;
         }
 
         function cambiarNivel(nivel, elemento) {
-            // Remover active de todos los botones
             document.querySelectorAll('.difficulty-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            // Añadir active al botón clickeado
             elemento.classList.add('active');
             currentLevel = nivel;
+        }
+
+        // Función para convertir notación matemática
+        function convertirNotacion(texto) {
+            if (!texto) return '';
+            
+            return texto
+                // Potencias básicas
+                .replace(/x\^2/g, '$x^2$')
+                .replace(/x\^3/g, '$x^3$')
+                .replace(/x\^4/g, '$x^4$')
+                .replace(/x\^(\d+)/g, '$x^{$1}$')
+                .replace(/x\^\(([^)]+)\)/g, '$x^{$1}$')
+                
+                // Funciones trigonométricas
+                .replace(/sin\(([^)]+)\)/g, '$\\sin($1)$')
+                .replace(/cos\(([^)]+)\)/g, '$\\cos($1)$')
+                .replace(/tan\(([^)]+)\)/g, '$\\tan($1)$')
+                
+                // Logaritmos y exponenciales
+                .replace(/ln\(([^)]+)\)/g, '$\\ln($1)$')
+                .replace(/log\(([^)]+)\)/g, '$\\log($1)$')
+                .replace(/e\^(\d+)/g, '$e^{$1}$')
+                .replace(/e\^\(([^)]+)\)/g, '$e^{$1}$')
+                
+                // Fracciones básicas
+                .replace(/(\w+)\/(\d+)/g, '$\\frac{$1}{$2}$')
+                .replace(/(\d+)\/(\d+)/g, '$\\frac{$1}{$2}$')
+                
+                // Raíces
+                .replace(/sqrt\(([^)]+)\)/g, '$\\sqrt{$1}$')
+                
+                // Integrales
+                .replace(/∫/g, '$\\int$')
+                .replace(/integral de/gi, '$\\int$')
+                
+                // Derivadas
+                .replace(/d\/dx/g, '$\\frac{d}{dx}$')
+                .replace(/f'\(x\)/g, "$f'(x)$")
+                
+                // Símbolos especiales
+                .replace(/\*/g, ' \\cdot ')
+                .replace(/±/g, '$\\pm$')
+                .replace(/∞/g, '$\\infty$')
+                
+                // Constante de integración
+                .replace(/\+ C/g, ' + C')
+                
+                // Limpiar espacios extra
+                .replace(/\$\s+/g, '$')
+                .replace(/\s+\$/g, '$');
         }
 
         // Función principal para resolver problemas
@@ -481,6 +575,135 @@
             }
         }
 
+        // Función para mostrar resultados con efecto de escritura
+        function mostrarResultados(resultados, funcionOriginal) {
+            const container = document.getElementById('results-container');
+            
+            let html = `
+                <div class="result-item">
+                    <div class="result-header">
+                        <span class="result-title">📋 Problema: ${currentOperation} de ${convertirNotacion(funcionOriginal)}</span>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+
+            // Renderizar matemáticas del título
+            if (window.MathJax) {
+                MathJax.typesetPromise([container]);
+            }
+
+            // Mostrar cada resultado con efecto de escritura
+            resultados.forEach((resultado, index) => {
+                setTimeout(() => {
+                    mostrarResultadoConEfecto(resultado, container);
+                }, index * 1500); // 1.5 segundos entre cada resultado
+            });
+        }
+
+        async function mostrarResultadoConEfecto(resultado, container) {
+            const badgeClass = resultado.modelo.includes('DeepSeek') ? 'ai-deepseek' : 
+                             resultado.modelo.includes('Mistral') ? 'ai-mistral' : 
+                             resultado.modelo.includes('Kimi') ? 'ai-kimi' : 'ai-deepseek';
+            
+            // Crear el contenedor del resultado
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result-item';
+            resultDiv.style.opacity = '0';
+            
+            let headerHtml = `
+                <div class="result-header">
+                    <span class="result-title">${resultado.titulo}</span>
+                    <div>
+                        <span class="ai-badge ${badgeClass}">${resultado.modelo}</span>
+                        <small style="margin-left: 10px; color: #666;">${resultado.meta}</small>
+                    </div>
+                </div>
+            `;
+
+            resultDiv.innerHTML = headerHtml;
+            container.appendChild(resultDiv);
+            
+            // Animación de aparición
+            resultDiv.style.transition = 'opacity 0.5s ease';
+            resultDiv.style.opacity = '1';
+
+            // Contenedor para el texto que se escribirá
+            const contentDiv = document.createElement('div');
+            
+            if (resultado.isSteps) {
+                contentDiv.className = 'steps-container';
+                resultDiv.appendChild(contentDiv);
+                
+                // Escribir cada paso uno por uno
+                for (let i = 0; i < resultado.content.length; i++) {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'step';
+                    contentDiv.appendChild(stepDiv);
+                    
+                    await escribirTexto(stepDiv, convertirNotacion(resultado.content[i]), 30);
+                    await new Promise(resolve => setTimeout(resolve, 300)); // Pausa entre pasos
+                }
+            } else if (resultado.isAnalysis) {
+                contentDiv.className = 'result-content';
+                resultDiv.appendChild(contentDiv);
+                
+                const analisisTexto = `
+                    <strong>Dificultad:</strong> ${resultado.content.dificultad}<br>
+                    <strong>Métodos:</strong> ${resultado.content.metodos.join(', ')}<br>
+                    <strong>Errores comunes:</strong> ${resultado.content.errores_comunes.join(', ')}<br>
+                    <strong>Consejos PAU:</strong> ${resultado.content.consejos_pau?.join(', ') || 'N/A'}
+                `;
+                
+                await escribirTextoHTML(contentDiv, analisisTexto, 20);
+            } else {
+                contentDiv.className = 'result-content';
+                resultDiv.appendChild(contentDiv);
+                
+                await escribirTexto(contentDiv, convertirNotacion(resultado.content), 40);
+            }
+
+            // Renderizar matemáticas después de escribir
+            if (window.MathJax) {
+                MathJax.typesetPromise([contentDiv]);
+            }
+        }
+
+        // Función para escribir texto con efecto máquina de escribir
+        async function escribirTexto(elemento, texto, velocidad = 30) {
+            elemento.className += ' typing';
+            elemento.textContent = '';
+            
+            for (let i = 0; i < texto.length; i++) {
+                elemento.textContent += texto[i];
+                await new Promise(resolve => setTimeout(resolve, velocidad));
+            }
+            
+            elemento.className = elemento.className.replace(' typing', '');
+        }
+
+        // Función para escribir HTML con efecto máquina de escribir
+        async function escribirTextoHTML(elemento, htmlTexto, velocidad = 20) {
+            // Convertir HTML a texto plano para el efecto de escritura
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlTexto;
+            const textoPlano = tempDiv.textContent || tempDiv.innerText || '';
+            
+            elemento.className += ' typing';
+            elemento.textContent = '';
+            
+            for (let i = 0; i < textoPlano.length; i++) {
+                elemento.textContent += textoPlano[i];
+                await new Promise(resolve => setTimeout(resolve, velocidad));
+            }
+            
+            elemento.className = elemento.className.replace(' typing', '');
+            // Una vez terminado el efecto, mostrar el HTML real
+            elemento.innerHTML = htmlTexto;
+        }
+
         // Función para llamar APIs
         async function llamarAPI(endpoint, data) {
             const response = await fetch(`${backendUrl}/${endpoint}`, {
@@ -499,14 +722,14 @@
         // Función de fallback para resultados básicos
         function obtenerResultadoBasico(funcion, operacion) {
             const resultados = {
-                'x^2': { derivada: '2x', integral: 'x³/3 + C' },
-                'x*sin(x)': { derivada: 'sin(x) + x·cos(x)', integral: '-x·cos(x) + sin(x) + C' },
-                'sin(x^2)': { derivada: '2x·cos(x²)', integral: 'Integral de Fresnel [no elemental]' },
-                'x*ln(x)': { derivada: 'ln(x) + 1', integral: '(x²/2)·ln(x) - x²/4 + C' },
-                'e^(2*x)': { derivada: '2·e^(2x)', integral: 'e^(2x)/2 + C' },
-                'x^3': { derivada: '3x²', integral: 'x⁴/4 + C' },
-                'ln(x)': { derivada: '1/x', integral: 'x·ln(x) - x + C' },
-                'x^3 + 2*x^2 - 5*x + 1': { derivada: '3x² + 4x - 5', integral: 'x⁴/4 + (2x³)/3 - (5x²)/2 + x + C' }
+                'x^2': { derivada: '2x', integral: 'x^3/3 + C' },
+                'x*sin(x)': { derivada: 'sin(x) + x*cos(x)', integral: '-x*cos(x) + sin(x) + C' },
+                'sin(x^2)': { derivada: '2x*cos(x^2)', integral: 'Integral de Fresnel [no elemental]' },
+                'x*ln(x)': { derivada: 'ln(x) + 1', integral: '(x^2/2)*ln(x) - x^2/4 + C' },
+                'e^(2*x)': { derivada: '2*e^(2*x)', integral: 'e^(2*x)/2 + C' },
+                'x^3': { derivada: '3x^2', integral: 'x^4/4 + C' },
+                'ln(x)': { derivada: '1/x', integral: 'x*ln(x) - x + C' },
+                'x^3 + 2*x^2 - 5*x + 1': { derivada: '3x^2 + 4x - 5', integral: 'x^4/4 + (2x^3)/3 - (5x^2)/2 + x + C' }
             };
 
             let resultado = resultados[funcion];
@@ -524,6 +747,7 @@
                 return operacion === 'derivada' ? resultado.derivada : resultado.integral;
             } else {
                 return operacion === 'derivada' ? 
+                    `f'(x) = [Derivada de ${funcion}]
                     `f'(x) = [Derivada de ${funcion}]` : 
                     `∫${funcion} dx = [Integral de ${funcion}] + C`;
             }
@@ -541,59 +765,6 @@
             });
             
             return pasos.length > 0 ? pasos : [texto.trim()];
-        }
-
-        function mostrarResultados(resultados, funcionOriginal) {
-            const container = document.getElementById('results-container');
-            
-            let html = `
-                <div class="result-item">
-                    <div class="result-header">
-                        <span class="result-title">📋 Problema: ${currentOperation} de ${funcionOriginal}</span>
-                    </div>
-                </div>
-            `;
-
-            resultados.forEach((resultado) => {
-                const badgeClass = resultado.modelo.includes('DeepSeek') ? 'ai-deepseek' : 
-                                 resultado.modelo.includes('Mistral') ? 'ai-mistral' : 
-                                 resultado.modelo.includes('Kimi') ? 'ai-kimi' : 'ai-deepseek';
-                
-                html += `
-                    <div class="result-item">
-                        <div class="result-header">
-                            <span class="result-title">${resultado.titulo}</span>
-                            <div>
-                                <span class="ai-badge ${badgeClass}">${resultado.modelo}</span>
-                                <small style="margin-left: 10px; color: #666;">${resultado.meta}</small>
-                            </div>
-                        </div>
-                `;
-
-                if (resultado.isSteps) {
-                    html += `
-                        <div class="steps-container">
-                            ${resultado.content.map(step => `<div class="step">${step}</div>`).join('')}
-                        </div>
-                    `;
-                } else if (resultado.isAnalysis) {
-                    html += `
-                        <div class="result-content">
-                            <strong>Dificultad:</strong> ${resultado.content.dificultad}<br>
-                            <strong>Métodos:</strong> ${resultado.content.metodos.join(', ')}<br>
-                            <strong>Errores comunes:</strong> ${resultado.content.errores_comunes.join(', ')}<br>
-                            <strong>Consejos PAU:</strong> ${resultado.content.consejos_pau?.join(', ') || 'N/A'}
-                        </div>
-                    `;
-                } else {
-                    html += `<div class="result-content">${resultado.content}</div>`;
-                }
-
-                html += `</div>`;
-            });
-
-            container.innerHTML = html;
-            container.style.display = 'block';
         }
 
         function mostrarError(mensaje) {
