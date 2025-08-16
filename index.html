@@ -402,22 +402,24 @@
         let currentOperation = 'derivada';
         let currentLevel = 'normal';
 
-        // Funciones para cambiar estado
-        function cambiarOperacion(operacion, elemento) {
-            document.querySelectorAll('.operation-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            elemento.classList.add('active');
-            currentOperation = operacion;
-        }
+      // Funciones para cambiar estado
+function cambiarOperacion(operacion, elemento) {
+    document.querySelectorAll('.operation-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    elemento.classList.add('active');
+    currentOperation = operacion;
+    console.log('Operación cambiada a:', operacion); // Para debug
+}
 
-        function cambiarNivel(nivel, elemento) {
-            document.querySelectorAll('.difficulty-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            elemento.classList.add('active');
-            currentLevel = nivel;
-        }
+function cambiarNivel(nivel, elemento) {
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    elemento.classList.add('active');
+    currentLevel = nivel;
+    console.log('Nivel cambiado a:', nivel); // Para debug
+}
 
         // Función para convertir notación matemática
         function convertirNotacion(texto) {
