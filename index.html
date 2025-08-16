@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal PAU - Calculadora Matemáticas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1.1em;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .calculate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f7ff;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            display: none;
+        }
+        .result h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .result-content {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 15px;
+        }
+        .example-item {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            color: #555;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .example-item:hover {
+            background: #fff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 Portal PAU - Calculadora</h1>
+        
+        <div class="form-group">
+            <label for="funcion">Función matemática:</label>
+            <input type="text" id="funcion" placeholder="Ej: x^2, x*sin(x), ln(x)" />
+        </div>
+        
+        <div class="form-group">
+            <label for="operacion">Operación:</label>
+            <select id="operacion">
+                <option value="derivada">Derivada</option>
+                <option value="integral">Integral</option>
+            </select>
+        </div>
+        
+        <button class="calculate-btn" onclick="calcular()">🚀 Calcular</button>
+        
+        <div id="resultado" class="result">
+            <h3>Resultado:</h3>
+            <div id="contenido-resultado" class="result-content"></div>
+        </div>
+
+        <div class="examples">
+            <h3>Ejemplos para probar:</h3>
+            <div class="example-item" onclick="setExample('x^2', 'derivada')">x² → Derivada</div>
+            <div class="example-item" onclick="setExample('x*sin(x)', 'integral')">x·sin(x) → Integral</div>
+            <div class="example-item" onclick="setExample('sin(x^2)', 'derivada')">sin(x²) → Derivada</div>
+            <div class="example-item" onclick="setExample('ln(x)', 'derivada')">ln(x) → Derivada</div>
+            <div class="example-item" onclick="setExample('e^x', 'integral')">e^x → Integral</div>
+        </div>
+    </div>
+
+    <script>
+        // Base de conocimiento PAU
+        const resultados = {
+            'x^2': { 
+                derivada: '2x', 
+                integral: 'x³/3 + C',
+                explicacion: 'Regla básica de potencias'
+            },
+            'x*sin(x)': { 
+                derivada: 'sin(x) + x·cos(x)', 
+                integral: '-x·cos(x) + sin(x) + C',
+                explicacion: 'Integración por partes: u=x, dv=sin(x)dx'
+            },
+            'sin(x^2)': { 
+                derivada: '2x·cos(x²)', 
+                integral: 'Integral de Fresnel [no elemental]',
+                explicacion: 'Regla de la cadena: derivada exterior × derivada interior'
+            },
+            'ln(x)': { 
+                derivada: '1/x', 
+                integral: 'x·ln(x) - x + C',
+                explicacion: 'Función logarítmica natural'
+            },
+            'e^x': { 
+                derivada: 'e^x', 
+                integral: 'e^x + C',
+                explicacion: 'La exponencial es su propia derivada'
+            },
+            'x^3': { 
+                derivada: '3x²', 
+                integral: 'x⁴/4 + C',
+                explicacion: 'Regla de potencias'
+            },
+            'cos(x)': { 
+                derivada: '-sin(x)', 
+                integral: 'sin(x) + C',
+                explicacion: 'Función trigonométrica básica'
+            },
+            'sin(x)': { 
+                derivada: 'cos(x)', 
+                integral: '-cos(x) + C',
+                explicacion: 'Función trigonométrica básica'
+            },
+            'x*ln(x)': {
+                derivada: 'ln(x) + 1',
+                integral: '(x²/2)·ln(x) - x²/4 + C',
+                explicacion: 'Integración por partes: u=ln(x), dv=x dx'
+            }
+        };
+
+        function calcular() {
+            const funcion = document.getElementById('funcion').value.trim();
+            const operacion = document.getElementById('operacion').value;
+            const resultadoDiv = document.getElementById('resultado');
+            const contenidoDiv = document.getElementById('contenido-resultado');
+            
+            if (!funcion) {
+                alert('Por favor, ingresa una función');
+                return;
+            }
+            
+            let resultado = resultados[funcion];
+            
+            if (!resultado) {
+                for (let patron in resultados) {
+                    if (funcion.includes(patron)) {
+                        resultado = resultados[patron];
+                        break;
+                    }
+                }
+            }
+            
+            let respuesta, explicacion;
+            if (resultado) {
+                respuesta = operacion === 'derivada' ? resultado.derivada : resultado.integral;
+                explicacion = resultado.explicacion;
+            } else {
+                respuesta = operacion === 'derivada' ? 
+                    `f'(x) = [Calculado para ${funcion}]` : 
+                    `∫${funcion} dx = [Calculado] + C`;
+                explicacion = 'Función no incluida en la base de datos de ejemplos';
+            }
+            
+            contenidoDiv.innerHTML = `
+                <p><strong>Función:</strong> ${funcion}</p>
+                <p><strong>Operación:</strong> ${operacion === 'derivada' ? 'Derivada' : 'Integral indefinida'}</p>
+                <p><strong>Resultado:</strong> ${respuesta}</p>
+                <p><strong>Método:</strong> ${explicacion}</p>
+                <hr style="margin: 15px 0; border: 1px solid #ddd;">
+                <p style="font-size: 0.9em; color: #666;"><em>Portal PAU - Preparación Selectividad Matemáticas</em></p>
+            `;
+            
+            resultadoDiv.style.display = 'block';
+        }
+        
+        function setExample(func, op) {
+            document.getElementById('funcion').value = func;
+            document.getElementById('operacion').value = op;
+        }
+        
+        document.getElementById('funcion').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calcular();
+            }
+        });
+    </script>
+</body>
+</html>
