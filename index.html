@@ -776,19 +776,24 @@
             `;
             container.style.display = 'block';
         }
-
-        function setExample(funcion, operacion) {
-            document.getElementById('funcion').value = funcion;
-            
-            // Actualizar botones de operación
-            document.querySelectorAll('.operation-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.onclick.toString().includes(`'${operacion}'`)) {
-                    btn.classList.add('active');
-                }
-            });
-            currentOperation = operacion;
-        }
+function setExample(funcion, operacion) {
+    document.getElementById('funcion').value = funcion;
+    
+    // Actualizar botones de operación
+    document.querySelectorAll('.operation-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Activar el botón correcto
+    if (operacion === 'derivada') {
+        document.querySelector('[onclick*="derivada"]').classList.add('active');
+    } else {
+        document.querySelector('[onclick*="integral"]').classList.add('active');
+    }
+    
+    currentOperation = operacion;
+}
+        
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
