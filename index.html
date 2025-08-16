@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal PAU - Calculadora Matemáticas (Corregida)</title>
+    <title>Portal PAU - Calculadora Matemáticas (Formato Corregido)</title>
     
     <!-- MathJax para notación matemática -->
     <script>
@@ -77,7 +77,7 @@
         .loading { display: none; justify-content: center; align-items: center; gap: 10px; color: #666; }
         .spinner { width: 20px; height: 20px; border: 2px solid #e1e5e9; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        .result-container { display: none; animation: fadeIn 0.5s ease; }
+        .result-container { display: block; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .result-item { background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e1e5e9; animation: slideIn 0.5s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -188,27 +188,18 @@
 
         // --- FUNCIONES DE LÓGICA PRINCIPAL ---
 
-        /**
-         * Cambia la operación activa (derivada/integral) y actualiza la UI.
-         */
         function cambiarOperacion(operacion, elemento) {
             document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
             elemento.classList.add('active');
             currentOperation = operacion;
         }
 
-        /**
-         * Cambia el nivel de detalle activo y actualiza la UI.
-         */
         function cambiarNivel(nivel, elemento) {
             document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
             elemento.classList.add('active');
             currentLevel = nivel;
         }
 
-        /**
-         * Establece un ejemplo en el input y configura la operación correspondiente.
-         */
         function setExample(funcion, operacion) {
             document.getElementById('funcion').value = funcion;
             document.querySelectorAll('.operation-btn').forEach(btn => {
@@ -217,10 +208,6 @@
             currentOperation = operacion;
         }
 
-        /**
-         * Función principal que se ejecuta al pulsar "Resolver".
-         * Gestiona el estado de la UI, llama a las APIs y muestra los resultados.
-         */
         async function resolverProblema() {
             const funcionInput = document.getElementById('funcion');
             const btn = document.getElementById('calculate-btn');
@@ -233,7 +220,6 @@
                 return;
             }
 
-            // Actualizar UI para estado de carga
             btnText.style.display = 'none';
             loading.style.display = 'flex';
             btn.disabled = true;
@@ -244,7 +230,6 @@
                 
                 let resultados = [];
 
-                // 1. DeepSeek para cálculo principal (si no es rápido)
                 if (currentLevel !== 'rapido') {
                     try {
                         const deepseekResult = await llamarAPI('deepseek', { prompt });
@@ -257,20 +242,18 @@
                     }
                 }
 
-                // 2. Mistral para explicación (normal y detallado)
                 if (currentLevel === 'normal' || currentLevel === 'detallado') {
                     try {
                         const resultadoPrevio = resultados[0]?.content || 'resultado calculado';
                         const mistralResult = await llamarAPI('mistral', { prompt, resultado: resultadoPrevio });
                         if (mistralResult.success) {
-                            resultados.push({ titulo: '🎓 Explicación Paso a Paso', modelo: 'Mistral Large', content: procesarExplicacion(mistralResult.explicacion), meta: `${mistralResult.tokens} tokens`, isSteps: true });
+                            resultados.push({ titulo: '🎓 Explicación Paso a Paso', modelo: 'Mistral Large', content: mistralResult.explicacion, meta: `${mistralResult.tokens} tokens`, isSteps: true });
                         }
                     } catch (error) {
                         console.error('Error Mistral:', error);
                     }
                 }
 
-                // 3. Kimi para análisis (solo detallado)
                 if (currentLevel === 'detallado') {
                     try {
                         const kimiResult = await llamarAPI('kimi', { prompt });
@@ -282,7 +265,6 @@
                     }
                 }
 
-                // Si modo rápido o no hay resultados, usar fallback
                 if (resultados.length === 0) {
                     resultados.push({ titulo: '⚡ Resultado Rápido', modelo: 'Sistema Local', content: obtenerResultadoBasico(funcion, currentOperation), meta: 'Cálculo instantáneo' });
                 }
@@ -293,7 +275,6 @@
                 mostrarError(`Se produjo un error al contactar con el servidor. Por favor, inténtalo de nuevo.`);
                 console.error('Error general en resolverProblema:', error);
             } finally {
-                // Restaurar UI
                 btnText.style.display = 'inline';
                 loading.style.display = 'none';
                 btn.disabled = false;
@@ -302,9 +283,6 @@
 
         // --- FUNCIONES AUXILIARES Y DE RENDERIZADO ---
 
-        /**
-         * Llama a un endpoint de la API con los datos proporcionados.
-         */
         async function llamarAPI(endpoint, data) {
             const response = await fetch(`${backendUrl}/${endpoint}`, {
                 method: 'POST',
@@ -315,19 +293,15 @@
             return await response.json();
         }
 
-        /**
-         * Muestra los resultados en el contenedor con un efecto de escritura.
-         */
         function mostrarResultados(resultados, funcionOriginal) {
             const container = document.getElementById('results-container');
             container.innerHTML = `
                 <div class="result-item">
                     <div class="result-header">
-                        <span class="result-title">📋 Problema: ${currentOperation} de ${convertirNotacion(funcionOriginal)}</span>
+                        <span class="result-title">📋 Problema: ${currentOperation} de ${convertirNotacionMatematica(funcionOriginal)}</span>
                     </div>
                 </div>
             `;
-            container.style.display = 'block';
             if (window.MathJax) MathJax.typesetPromise([container]);
 
             resultados.forEach((resultado, index) => {
@@ -335,9 +309,6 @@
             });
         }
 
-        /**
-         * Renderiza un único resultado con su animación y formato.
-         */
         async function mostrarResultadoConEfecto(resultado, container) {
             const badgeClass = resultado.modelo.includes('DeepSeek') ? 'ai-deepseek' : 
                              resultado.modelo.includes('Mistral') ? 'ai-mistral' : 'ai-kimi';
@@ -364,51 +335,40 @@
 
             if (resultado.isSteps) {
                 contentDiv.className = 'steps-container';
-                for (const stepText of resultado.content) {
+                const pasos = procesarExplicacion(resultado.content);
+                for (const paso of pasos) {
                     const stepDiv = document.createElement('div');
                     stepDiv.className = 'step';
                     contentDiv.appendChild(stepDiv);
-                    await escribirTexto(stepDiv, convertirNotacion(stepText), 30);
-                    await new Promise(resolve => setTimeout(resolve, 300));
+                    const pasoHtml = convertirFormatoAIaHTML(paso);
+                    await escribirTextoHTML(stepDiv, convertirNotacionMatematica(pasoHtml), 30);
                 }
             } else if (resultado.isAnalysis) {
                 contentDiv.className = 'result-content';
+                const analisisLimpio = limpiarAnalisis(resultado.content);
                 const analisisTexto = `
-                    <strong>Dificultad:</strong> ${resultado.content.dificultad}<br>
-                    <strong>Métodos:</strong> ${resultado.content.metodos.join(', ')}<br>
-                    <strong>Errores comunes:</strong> ${resultado.content.errores_comunes.join(', ')}<br>
-                    <strong>Consejos PAU:</strong> ${resultado.content.consejos_pau?.join(', ') || 'N/A'}
+                    <strong>Dificultad:</strong> ${analisisLimpio.dificultad}<br>
+                    <strong>Métodos:</strong> ${analisisLimpio.metodos.join(', ')}<br>
+                    <strong>Errores comunes:</strong> ${analisisLimpio.errores_comunes.join(', ')}<br>
+                    <strong>Consejos PAU:</strong> ${analisisLimpio.consejos_pau?.join(', ') || 'N/A'}
                 `;
                 await escribirTextoHTML(contentDiv, analisisTexto, 20);
             } else {
                 contentDiv.className = 'result-content';
-                await escribirTexto(contentDiv, convertirNotacion(resultado.content), 40);
+                const contenidoHtml = convertirFormatoAIaHTML(resultado.content);
+                await escribirTextoHTML(contentDiv, convertirNotacionMatematica(contenidoHtml), 40);
             }
 
             if (window.MathJax) MathJax.typesetPromise([contentDiv]);
         }
 
-        /**
-         * Simula el efecto de escritura para texto plano.
-         */
-        async function escribirTexto(elemento, texto, velocidad) {
-            elemento.classList.add('typing');
-            for (let i = 0; i < texto.length; i++) {
-                elemento.textContent += texto[i];
-                await new Promise(resolve => setTimeout(resolve, velocidad));
-            }
-            elemento.classList.remove('typing');
-        }
-
-        /**
-         * Simula el efecto de escritura para contenido HTML.
-         */
         async function escribirTextoHTML(elemento, htmlTexto, velocidad) {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = htmlTexto;
             const textoPlano = tempDiv.textContent || tempDiv.innerText || '';
             
             elemento.classList.add('typing');
+            elemento.innerHTML = ''; // Empezar vacío
             for (let i = 0; i < textoPlano.length; i++) {
                 elemento.textContent += textoPlano[i];
                 await new Promise(resolve => setTimeout(resolve, velocidad));
@@ -417,35 +377,55 @@
             elemento.innerHTML = htmlTexto;
         }
 
-        /**
-         * Muestra un mensaje de error en el contenedor de resultados.
-         */
         function mostrarError(mensaje) {
             const container = document.getElementById('results-container');
             container.innerHTML = `<div class="error-message"><strong>⚠️ Error:</strong> ${mensaje}</div>`;
-            container.style.display = 'block';
         }
 
-        /**
-         * Procesa el texto de explicación para dividirlo en pasos.
-         */
         function procesarExplicacion(texto) {
-            const lineas = texto.split(/\n+/).filter(linea => linea.trim());
-            const pasos = lineas.map(linea => linea.replace(/^\d+\.\s*/, '').trim()).filter(paso => paso.length > 10);
-            return pasos.length > 0 ? pasos : [texto.trim()];
+            return texto.split(/\n+/).filter(linea => linea.trim());
         }
 
         /**
-         * Convierte notación simple a formato LaTeX para MathJax.
+         * NUEVA FUNCIÓN: Convierte el formato de la IA a HTML estándar.
          */
-        function convertirNotacion(texto) {
+        function convertirFormatoAIaHTML(texto) {
+            if (typeof texto !== 'string') return texto;
+            // Convierte ### Título ### a <strong>Título</strong>
+            let html = texto.replace(/### (.*?) ###/g, '<strong>$1</strong>');
+            // Convierte \cdot \cdot texto \cdot \cdot a <strong>texto</strong>
+            html = html.replace(/\\cdot \\cdot (.*?) \\cdot \\cdot/g, '<strong>$1</strong>');
+            // Elimina \cdot \cdot sueltos que puedan quedar
+            html = html.replace(/\\cdot \\cdot/g, '');
+            // Convierte saltos de línea a <br> para que se muestren en HTML
+            html = html.replace(/\n/g, '<br>');
+            return html.trim();
+        }
+        
+        /**
+         * Limpia el objeto de análisis recursivamente.
+         */
+        function limpiarAnalisis(analisisObj) {
+            const limpio = {};
+            for (const key in analisisObj) {
+                const value = analisisObj[key];
+                if (typeof value === 'string') {
+                    limpio[key] = convertirFormatoAIaHTML(value);
+                } else if (Array.isArray(value)) {
+                    limpio[key] = value.map(item => convertirFormatoAIaHTML(item));
+                } else {
+                    limpio[key] = value;
+                }
+            }
+            return limpio;
+        }
+
+        function convertirNotacionMatematica(texto) {
             if (!texto) return '';
-            return texto.replace(/\*/g, ' \\cdot '); // Simplificado, se pueden añadir más reglas
+            // Solo una regla simple para no interferir con el HTML
+            return texto.replace(/\*/g, ' \\cdot ');
         }
 
-        /**
-         * **CORREGIDO** - Función de fallback para obtener resultados básicos sin API.
-         */
         function obtenerResultadoBasico(funcion, operacion) {
             const resultados = {
                 'x^2': { derivada: '2x', integral: 'x^3/3 + C' },
@@ -453,54 +433,47 @@
                 'sin(x^2)': { derivada: '2x*cos(x^2)', integral: 'Integral de Fresnel [no elemental]' },
                 'x*ln(x)': { derivada: 'ln(x) + 1', integral: '(x^2/2)*ln(x) - x^2/4 + C' },
                 'e^(2*x)': { derivada: '2*e^(2*x)', integral: 'e^(2*x)/2 + C' },
-                'x^3': { derivada: '3x^2', integral: 'x^4/4 + C' },
-                'ln(x)': { derivada: '1/x', integral: 'x*ln(x) - x + C' },
-                'x^3 + 2*x^2 - 5*x + 1': { derivada: '3x^2 + 4x - 5', integral: 'x^4/4 + (2x^3)/3 - (5x^2)/2 + x + C' }
             };
             const resultado = resultados[funcion];
             if (resultado) {
                 return operacion === 'derivada' ? resultado.derivada : resultado.integral;
             } else {
-                return operacion === 'derivada' ?
-                    `f'(x) = [Derivada de ${funcion}]` :
-                    `∫${funcion} dx = [Integral de ${funcion}] + C`;
+                return operacion === 'derivada' ? `f'(x) = [Derivada de ${funcion}]` : `∫${funcion} dx = [Integral de ${funcion}] + C`;
             }
         }
 
-        // --- EVENT LISTENERS (GESTIÓN DE EVENTOS CENTRALIZADA) ---
+        // --- EVENT LISTENERS ---
         document.addEventListener('DOMContentLoaded', function() {
             const funcionInput = document.getElementById('funcion');
             
-            // Botones de tipo de operación
             document.querySelectorAll('.operation-btn').forEach(btn => {
                 btn.addEventListener('click', () => cambiarOperacion(btn.dataset.operacion, btn));
             });
 
-            // Botones de nivel de dificultad
             document.querySelectorAll('.difficulty-btn').forEach(btn => {
                 btn.addEventListener('click', () => cambiarNivel(btn.dataset.nivel, btn));
             });
 
-            // Botón principal para resolver
             document.getElementById('calculate-btn').addEventListener('click', resolverProblema);
 
-            // Clic en los ejemplos
             document.querySelectorAll('.example-item').forEach(item => {
                 item.addEventListener('click', () => setExample(item.dataset.funcion, item.dataset.operacion));
             });
 
-            // Resolver con la tecla Enter
             funcionInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault(); // Evitar envío de formulario si lo hubiera
+                    e.preventDefault();
                     resolverProblema();
                 }
             });
 
-            // Limpiar resultados al escribir en el input
             funcionInput.addEventListener('input', () => {
                 if (funcionInput.value === '') {
-                    document.getElementById('results-container').style.display = 'none';
+                    document.getElementById('results-container').innerHTML = `
+                        <div class="result-item">
+                            <div class="result-header"><span class="result-title">💡 Esperando entrada...</span></div>
+                            <div class="result-content">Ingresa una función y selecciona la operación para comenzar.</div>
+                        </div>`;
                 }
             });
         });
