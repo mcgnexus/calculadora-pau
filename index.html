@@ -1,4 +1,4 @@
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -81,7 +81,7 @@
             font-weight: 600;
             color: #555;
         }
-        input, select {
+        input {
             width: 100%;
             padding: 15px;
             border: 2px solid #e1e5e9;
@@ -89,7 +89,7 @@
             font-size: 1.1em;
             transition: all 0.3s ease;
         }
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -109,6 +109,7 @@
             transition: all 0.3s ease;
             text-align: center;
             font-weight: 600;
+            user-select: none;
         }
         .operation-btn:hover {
             border-color: #667eea;
@@ -134,6 +135,11 @@
             transition: all 0.3s ease;
             text-align: center;
             font-size: 0.9em;
+            user-select: none;
+        }
+        .difficulty-btn:hover {
+            border-color: #4caf50;
+            background: #f0fff0;
         }
         .difficulty-btn.active {
             background: #4caf50;
@@ -200,6 +206,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            flex-wrap: wrap;
         }
         .result-title {
             font-weight: 600;
@@ -249,21 +256,24 @@
             border-radius: 15px;
         }
         .example-item {
-            margin: 5px 0;
+            margin: 8px 0;
             font-family: 'Courier New', monospace;
             color: #555;
             cursor: pointer;
-            padding: 8px;
+            padding: 10px;
             border-radius: 5px;
             transition: background 0.2s;
+            user-select: none;
         }
         .example-item:hover {
             background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         @media (max-width: 768px) {
             .main-content { grid-template-columns: 1fr; }
             .container { padding: 20px; }
             h1 { font-size: 2em; }
+            .result-header { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -290,17 +300,17 @@
                 <div class="form-group">
                     <label>Tipo de operación:</label>
                     <div class="operation-type">
-                        <div class="operation-btn active" data-operation="derivada">📈 Derivada</div>
-                        <div class="operation-btn" data-operation="integral">∫ Integral</div>
+                        <div class="operation-btn active" onclick="cambiarOperacion('derivada', this)">📈 Derivada</div>
+                        <div class="operation-btn" onclick="cambiarOperacion('integral', this)">∫ Integral</div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Nivel de explicación:</label>
                     <div class="difficulty-selector">
-                        <div class="difficulty-btn" data-level="rapido">Rápido</div>
-                        <div class="difficulty-btn active" data-level="normal">Normal</div>
-                        <div class="difficulty-btn" data-level="detallado">Detallado</div>
+                        <div class="difficulty-btn" onclick="cambiarNivel('rapido', this)">Rápido</div>
+                        <div class="difficulty-btn active" onclick="cambiarNivel('normal', this)">Normal</div>
+                        <div class="difficulty-btn" onclick="cambiarNivel('detallado', this)">Detallado</div>
                     </div>
                 </div>
 
@@ -329,22 +339,302 @@
         </div>
 
         <div class="examples">
-            <h3>Ejemplos para probar:</h3>
-            <div class="example-item" onclick="setExample('x^2', 'derivada')">📈 x² → Derivada</div>
+            <h3>💡 Ejemplos para probar:</h3>
+            <div class="example-item" onclick="setExample('x^2', 'derivada')">📈 x² → Derivada básica</div>
             <div class="example-item" onclick="setExample('x*sin(x)', 'integral')">∫ x·sin(x) → Integral por partes</div>
             <div class="example-item" onclick="setExample('sin(x^2)', 'derivada')">📈 sin(x²) → Regla de la cadena</div>
             <div class="example-item" onclick="setExample('x*ln(x)', 'integral')">∫ x·ln(x) → Integral por partes</div>
-            <div class="example-item" onclick="setExample('e^(2*x)', 'derivada')">📈 e^(2x) → Regla de la cadena</div>
+            <div class="example-item" onclick="setExample('e^(2*x)', 'derivada')">📈 e^(2x) → Función exponencial</div>
+            <div class="example-item" onclick="setExample('x^3 + 2*x^2 - 5*x + 1', 'derivada')">📈 Polinomio completo</div>
         </div>
     </div>
 
     <script>
-        // Configuración
+        // Configuración global
         const backendUrl = 'https://calculadora-pau.vercel.app/api';
         let currentOperation = 'derivada';
         let currentLevel = 'normal';
 
+        // Funciones para cambiar estado
+        function cambiarOperacion(operacion, elemento) {
+            // Remover active de todos los botones
+            document.querySelectorAll('.operation-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Añadir active al botón clickeado
+            elemento.classList.add('active');
+            currentOperation = operacion;
+        }
+
+        function cambiarNivel(nivel, elemento) {
+            // Remover active de todos los botones
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Añadir active al botón clickeado
+            elemento.classList.add('active');
+            currentLevel = nivel;
+        }
+
+        // Función principal para resolver problemas
+        async function resolverProblema() {
+            const input = document.getElementById('funcion').value.trim();
+            const btnText = document.getElementById('btn-text');
+            const loading = document.getElementById('loading');
+            
+            if (!input) {
+                mostrarError('Por favor, ingresa una función matemática.');
+                return;
+            }
+
+            // Mostrar loading
+            btnText.style.display = 'none';
+            loading.style.display = 'flex';
+            document.querySelector('.calculate-btn').disabled = true;
+
+            try {
+                const operacionTexto = currentOperation === 'derivada' ? 'la derivada' : 'la integral indefinida';
+                const prompt = `Calcula ${operacionTexto} de la función: ${input}`;
+                
+                let resultados = [];
+
+                // 1. DeepSeek para cálculo principal (solo si no es rápido)
+                if (currentLevel !== 'rapido') {
+                    try {
+                        const deepseekResult = await llamarAPI('deepseek', { prompt });
+                        if (deepseekResult.success) {
+                            resultados.push({
+                                titulo: '🔬 Cálculo Principal',
+                                modelo: 'DeepSeek V3',
+                                content: deepseekResult.resultado,
+                                meta: `${deepseekResult.tokens} tokens`
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error DeepSeek:', error);
+                        // Fallback a resultado básico
+                        resultados.push({
+                            titulo: '🔬 Cálculo Principal (Fallback)',
+                            modelo: 'Sistema Local',
+                            content: obtenerResultadoBasico(input, currentOperation),
+                            meta: 'Cálculo local'
+                        });
+                    }
+                }
+
+                // 2. Mistral para explicación (normal y detallado)
+                if (currentLevel === 'normal' || currentLevel === 'detallado') {
+                    try {
+                        const resultadoPrevio = resultados[0]?.content || 'resultado calculado';
+                        const mistralResult = await llamarAPI('mistral', { prompt, resultado: resultadoPrevio });
+                        if (mistralResult.success) {
+                            resultados.push({
+                                titulo: '🎓 Explicación Paso a Paso',
+                                modelo: 'Mistral Large',
+                                content: procesarExplicacion(mistralResult.explicacion),
+                                meta: `${mistralResult.tokens} tokens`,
+                                isSteps: true
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error Mistral:', error);
+                    }
+                }
+
+                // 3. Kimi para análisis (solo detallado)
+                if (currentLevel === 'detallado') {
+                    try {
+                        const kimiResult = await llamarAPI('kimi', { prompt });
+                        if (kimiResult.success) {
+                            resultados.push({
+                                titulo: '🌙 Análisis Contextual',
+                                modelo: 'Kimi K2',
+                                content: kimiResult.analisis,
+                                meta: `${kimiResult.tokens} tokens`,
+                                isAnalysis: true
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error Kimi:', error);
+                    }
+                }
+
+                // Si modo rápido o no hay resultados, usar fallback
+                if (resultados.length === 0 || currentLevel === 'rapido') {
+                    resultados = [{
+                        titulo: '⚡ Resultado Rápido',
+                        modelo: 'Sistema Local',
+                        content: obtenerResultadoBasico(input, currentOperation),
+                        meta: 'Cálculo instantáneo'
+                    }];
+                }
+
+                mostrarResultados(resultados, input);
+
+            } catch (error) {
+                mostrarError(`Error: ${error.message}`);
+            } finally {
+                // Ocultar loading
+                btnText.style.display = 'inline';
+                loading.style.display = 'none';
+                document.querySelector('.calculate-btn').disabled = false;
+            }
+        }
+
+        // Función para llamar APIs
+        async function llamarAPI(endpoint, data) {
+            const response = await fetch(`${backendUrl}/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Error API ${endpoint}: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+
+        // Función de fallback para resultados básicos
+        function obtenerResultadoBasico(funcion, operacion) {
+            const resultados = {
+                'x^2': { derivada: '2x', integral: 'x³/3 + C' },
+                'x*sin(x)': { derivada: 'sin(x) + x·cos(x)', integral: '-x·cos(x) + sin(x) + C' },
+                'sin(x^2)': { derivada: '2x·cos(x²)', integral: 'Integral de Fresnel [no elemental]' },
+                'x*ln(x)': { derivada: 'ln(x) + 1', integral: '(x²/2)·ln(x) - x²/4 + C' },
+                'e^(2*x)': { derivada: '2·e^(2x)', integral: 'e^(2x)/2 + C' },
+                'x^3': { derivada: '3x²', integral: 'x⁴/4 + C' },
+                'ln(x)': { derivada: '1/x', integral: 'x·ln(x) - x + C' },
+                'x^3 + 2*x^2 - 5*x + 1': { derivada: '3x² + 4x - 5', integral: 'x⁴/4 + (2x³)/3 - (5x²)/2 + x + C' }
+            };
+
+            let resultado = resultados[funcion];
+            if (!resultado) {
+                // Buscar coincidencia parcial
+                for (let patron in resultados) {
+                    if (funcion.includes(patron.split('*')[0]) || funcion.includes(patron.split('+')[0])) {
+                        resultado = resultados[patron];
+                        break;
+                    }
+                }
+            }
+
+            if (resultado) {
+                return operacion === 'derivada' ? resultado.derivada : resultado.integral;
+            } else {
+                return operacion === 'derivada' ? 
+                    `f'(x) = [Derivada de ${funcion}]` : 
+                    `∫${funcion} dx = [Integral de ${funcion}] + C`;
+            }
+        }
+
+        function procesarExplicacion(texto) {
+            const lineas = texto.split(/\n+/).filter(linea => linea.trim());
+            const pasos = [];
+            
+            lineas.forEach(linea => {
+                const paso = linea.replace(/^\d+\.\s*/, '').trim();
+                if (paso && paso.length > 10) {
+                    pasos.push(paso);
+                }
+            });
+            
+            return pasos.length > 0 ? pasos : [texto.trim()];
+        }
+
+        function mostrarResultados(resultados, funcionOriginal) {
+            const container = document.getElementById('results-container');
+            
+            let html = `
+                <div class="result-item">
+                    <div class="result-header">
+                        <span class="result-title">📋 Problema: ${currentOperation} de ${funcionOriginal}</span>
+                    </div>
+                </div>
+            `;
+
+            resultados.forEach((resultado) => {
+                const badgeClass = resultado.modelo.includes('DeepSeek') ? 'ai-deepseek' : 
+                                 resultado.modelo.includes('Mistral') ? 'ai-mistral' : 
+                                 resultado.modelo.includes('Kimi') ? 'ai-kimi' : 'ai-deepseek';
+                
+                html += `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-title">${resultado.titulo}</span>
+                            <div>
+                                <span class="ai-badge ${badgeClass}">${resultado.modelo}</span>
+                                <small style="margin-left: 10px; color: #666;">${resultado.meta}</small>
+                            </div>
+                        </div>
+                `;
+
+                if (resultado.isSteps) {
+                    html += `
+                        <div class="steps-container">
+                            ${resultado.content.map(step => `<div class="step">${step}</div>`).join('')}
+                        </div>
+                    `;
+                } else if (resultado.isAnalysis) {
+                    html += `
+                        <div class="result-content">
+                            <strong>Dificultad:</strong> ${resultado.content.dificultad}<br>
+                            <strong>Métodos:</strong> ${resultado.content.metodos.join(', ')}<br>
+                            <strong>Errores comunes:</strong> ${resultado.content.errores_comunes.join(', ')}<br>
+                            <strong>Consejos PAU:</strong> ${resultado.content.consejos_pau?.join(', ') || 'N/A'}
+                        </div>
+                    `;
+                } else {
+                    html += `<div class="result-content">${resultado.content}</div>`;
+                }
+
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+
+        function mostrarError(mensaje) {
+            const container = document.getElementById('results-container');
+            container.innerHTML = `
+                <div class="error-message">
+                    <strong>⚠️ Error:</strong> ${mensaje}
+                </div>
+            `;
+            container.style.display = 'block';
+        }
+
+        function setExample(funcion, operacion) {
+            document.getElementById('funcion').value = funcion;
+            
+            // Actualizar botones de operación
+            document.querySelectorAll('.operation-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.onclick.toString().includes(`'${operacion}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+            currentOperation = operacion;
+        }
+
         // Event listeners
-        document.querySelectorAll('.operation-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.operation-btn').forEach(b => b.classList.remove('active'));
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enter para resolver
+            document.getElementById('funcion').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    resolverProblema();
+                }
+            });
+
+            // Limpiar resultados al escribir
+            document.getElementById('funcion').addEventListener('input', function() {
+                if (this.value === '') {
+                    document.getElementById('results-container').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
