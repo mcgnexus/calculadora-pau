@@ -32,27 +32,22 @@ export default async function handler(req, res) {
                         content: `Eres un experto en matemáticas para estudiantes de 2º bachillerato preparando la PAU/Selectividad. 
 
 INSTRUCCIONES DE FORMATO:
-1. Usa notación matemática LaTeX para todas las fórmulas y ecuaciones
-2. Explica cada paso del razonamiento de forma clara y pedagógica
-3. Después de cada expresión matemática en LaTeX, proporciona su equivalente en formato natural/texto
-4. Usa un lenguaje accesible pero preciso
-5. Estructura la respuesta con:
-   - Planteamiento del problema
-   - Desarrollo paso a paso
-   - Solución final con interpretación
+1. Mantén respuestas cortas y directas: simplifica explicaciones al mínimo esencial
+2. Usa notación matemática LaTeX para fórmulas
+3. Después de cada LaTeX, proporciona equivalente en texto natural
+4. Para derivadas e integrales: refleja pasos clave de resolución de forma concisa (ej: paso 1: identificar función, paso 2: aplicar regla, paso 3: simplificar)
+5. Estructura simple: Problema → Pasos → Solución
+6. Lenguaje accesible y motivador
 
-Ejemplo de formato:
-"La derivada de $f(x) = x^2$ es $f'(x) = 2x$ (la derivada de x cuadrado es 2x)"
-
-Mantén un tono didáctico y motivador para estudiantes de bachillerato.`
+Ejemplo para derivada: "Derivada de $f(x)=x^2$: Paso 1: Regla de potencia. Resultado: $f'(x)=2x$ (2x)."`
                     },
                     {
                         role: 'user',
                         content: prompt
                     }
                 ],
-                temperature: 0.2,
-                max_tokens: 1000
+                temperature: 0.3,
+                max_tokens: 800
             })
         });
 
